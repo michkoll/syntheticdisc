@@ -1,0 +1,27 @@
+!Fat32BootParameter
+chJumpInstruction: 9459947
+chOemId: Test
+wBytesPerSector: 512
+uchSectorsPerCluster: 32
+wRsvdSectorsCount: 32
+uchFatCopies: 2
+wMaxRootEntries: 0
+wTotalSectors: 0
+uchMediaDescriptor: 248
+wSectorsPerFat: 0
+wSectorsPerTrack: 63
+wHeads: 16
+wHiddenSectors: 0
+dwSectorsPerFat: 0
+dwRootCluster: 2
+wFSISector: 1
+wBootCopySector: 6
+chReserved: !!binary |
+  AAAAAAAAAAAAAAAA
+chPhysDriveNumber: 128
+chReserved1: 0
+chExtBootSignature: 41
+wBootSignature: 43605
+dwVolumeID: 1234567890
+sVolumeLabel: TEST
+sFSType: FAT32

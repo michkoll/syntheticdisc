@@ -1,13 +1,9 @@
 import disktools.disk
-from filesystem import fat32
+from filesystem import fat
 
 from disktools.disk import Disk
 
+fat.test()
 
-
-disktools.disk.test()
-
-fat32.test()
-
-Disk = Disk()
-Disk.test()
+disk = Disk()
+print(disk)
