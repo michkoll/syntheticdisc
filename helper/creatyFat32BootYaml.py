@@ -1,7 +1,7 @@
 import ruamel.yaml
 import logging
 
-from filesystem.fat32 import FAT32BootParameter, FAT32FsInfoParameter, FAT32Parameter
+from model.fat32model import *
 
 logPath = "./"
 fileName = "Disk"
@@ -18,10 +18,10 @@ yaml.register_class(FAT32BootParameter)
 yaml.register_class(FAT32FsInfoParameter)
 yaml.register_class(FAT32Parameter)
 
-bootparam = FAT32BootParameter(chJumpInstruction = 0x9058EB,
+bootparam = FAT32BootParameter(chJumpInstruction = b'\xEB\x58\x90',
                  chOemId = 'Test',
                  wBytesPerSector = 512,
-                 uchSectorsPerCluster = 32,
+                 uchSectorsPerCluster = 2,
                  wRsvdSectorsCount = 32,
                  uchFatCopies = 2,
                   wMaxRootEntries = 0,
@@ -54,11 +54,11 @@ fsinfo = FAT32FsInfoParameter(sSignature1 ='RRaA',
 
 fat32 = FAT32Parameter(bootparam, fsinfo)
 
-with open('fat32boot.yml', 'w') as outfile:
+with open('yaml/fat32boot.yml', 'w') as outfile:
     yaml.dump(bootparam, outfile)
 
-with open('fat32fsi.yml', 'w') as outfileFSI:
+with open('yaml/fat32fsi.yml', 'w') as outfileFSI:
     yaml.dump(fsinfo, outfileFSI)
 
-with open('fat32.yml', 'w') as outfileParam:
+with open('yaml/fat32.yml', 'w') as outfileParam:
     yaml.dump(fat32, outfileParam)

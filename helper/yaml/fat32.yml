@@ -1,10 +1,11 @@
 !FAT32Parameter
 boot: !Fat32BootParameter
-  chJumpInstruction: 9459947
+  chJumpInstruction: !!binary |
+    61iQ
   chOemId: Test
   wBytesPerSector: 512
-  uchSectorsPerCluster: 4
-  wRsvdSectorsCount: 32
+  uchSectorsPerCluster: 2
+  wRsvdSectorsCount: 8
   uchFatCopies: 2
   wMaxRootEntries: 0
   wTotalSectors: 0

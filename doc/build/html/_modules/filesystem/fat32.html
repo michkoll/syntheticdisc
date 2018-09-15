@@ -1,0 +1,471 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>filesystem.fat32 &#8212; SyntheticDisc  documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for filesystem.fat32</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+
+<span class="kn">from</span> <span class="nn">filesystem.fat</span> <span class="k">import</span> <span class="n">FAT_Boot</span><span class="p">,</span> <span class="n">FAT</span><span class="p">,</span> <span class="n">FatException</span>
+<span class="kn">from</span> <span class="nn">util.common</span> <span class="k">import</span> <span class="n">common_getattr</span>
+
+<span class="kn">from</span> <span class="nn">util.commonYaml</span> <span class="k">import</span> <span class="n">fat32Yaml</span>
+
+
+<div class="viewcode-block" id="FAT32"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32">[docs]</a><span class="k">class</span> <span class="nc">FAT32</span><span class="p">(</span><span class="n">FAT</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Parent class for all FAT32 operations.</span>
+
+<span class="sd">    :param stream: Disk stream for writing and reading</span>
+<span class="sd">    :type stream: Disk</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="s2">&quot;fat32&quot;</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">boot</span> <span class="o">=</span> <span class="n">FAT32_Boot</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span> <span class="o">=</span> <span class="n">FAT32FSINFO</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="FAT32.writeNew"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32.writeNew">[docs]</a>    <span class="k">def</span> <span class="nf">writeNew</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initializes new FAT filesystem in disk, including new FAT boot sector, FSInfo parameters and FATs and backup copies. Blanking root directory</span>
+
+<span class="sd">        :return: 0 for success, 1 for error</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FatException</span><span class="p">(</span><span class="s2">&quot;No stream given for writing!&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">pack</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="o">.</span><span class="n">pack</span><span class="p">())</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">wBootCopySector</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">wBootCopySector</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">wBytesPerSector</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">pack</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="o">.</span><span class="n">pack</span><span class="p">())</span>
+
+        <span class="c1"># Create blank FAT areas</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fat</span><span class="p">())</span>
+        <span class="n">blank</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">wBytesPerSector</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">dwSectorsPerFAT</span> <span class="o">*</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">blank</span><span class="p">)</span>
+
+        <span class="c1"># Initialize FAT1</span>
+        <span class="n">clus_0_2</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\xF8\xFF\xFF\x0F\xFF\xFF\xFF\xFF\xF8\xFF\xFF\x0F</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">wSectorsCount</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">wBytesPerSector</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">clus_0_2</span><span class="p">)</span>
+
+        <span class="c1"># ... and FAT2</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">uchFATCopies</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fat</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">cluster</span><span class="p">))</span>
+
+        <span class="c1"># Blank root directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">root</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">cluster</span><span class="p">))</span>
+
+        <span class="n">sizes</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">:</span><span class="s1">&#39;KiB&#39;</span><span class="p">,</span><span class="mi">20</span><span class="p">:</span><span class="s1">&#39;MiB&#39;</span><span class="p">,</span><span class="mi">30</span><span class="p">:</span><span class="s1">&#39;GiB&#39;</span><span class="p">,</span><span class="mi">40</span><span class="p">:</span><span class="s1">&#39;TiB&#39;</span><span class="p">,</span><span class="mi">50</span><span class="p">:</span><span class="s1">&#39;EiB&#39;</span><span class="p">}</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sizes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;required_size&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="n">k</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1024</span><span class="p">:</span> <span class="k">break</span>
+
+        <span class="n">free_clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Successfully applied FAT32 to a </span><span class="si">%.02f</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> volume.</span><span class="se">\n</span><span class="si">%d</span><span class="s2"> clusters of </span><span class="si">%.1f</span><span class="s2"> KB.</span><span class="se">\n</span><span class="si">%.02f</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> free in </span><span class="si">%d</span><span class="s2"> clusters.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;required_size&#39;</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="n">k</span><span class="p">),</span> <span class="n">sizes</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;cluster_size&#39;</span><span class="p">]</span><span class="o">/</span><span class="mf">1024.0</span><span class="p">,</span> <span class="n">free_clusters</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">cluster</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="o">&lt;&lt;</span><span class="n">k</span><span class="p">),</span> <span class="n">sizes</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">free_clusters</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">FAT #1 @0x</span><span class="si">%X</span><span class="s2">, Data Region @0x</span><span class="si">%X</span><span class="s2">, Root (cluster #</span><span class="si">%d</span><span class="s2">) @0x</span><span class="si">%X</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">fatoffs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">cl2offset</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">boot</span><span class="o">.</span><span class="n">cl2offset</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="mi">0</span></div></div>
+
+
+
+<div class="viewcode-block" id="FAT32_Boot"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32_Boot">[docs]</a><span class="k">class</span> <span class="nc">FAT32_Boot</span><span class="p">(</span><span class="n">FAT_Boot</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    FAT32 Boot sector</span>
+
+<span class="sd">    :param offset: Offset on disk</span>
+<span class="sd">    :type offset: int</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">FAT_Boot</span><span class="o">.</span><span class="n">layout</span><span class="p">)</span>
+    <span class="n">layout</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+        <span class="mh">0x24</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;dwSectorsPerFAT&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;I&#39;</span><span class="p">),</span>
+        <span class="mh">0x28</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;wMirroringFlags&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;H&#39;</span><span class="p">),</span>  <span class="c1"># bits 0-3: active FAT, it bit 7 set; else: mirroring as usual</span>
+        <span class="mh">0x2A</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;wVersion&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;H&#39;</span><span class="p">),</span>
+        <span class="mh">0x2C</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;dwRootCluster&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;I&#39;</span><span class="p">),</span>  <span class="c1"># usually 2</span>
+        <span class="mh">0x30</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;wFSISector&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;H&#39;</span><span class="p">),</span>  <span class="c1"># usually 1</span>
+        <span class="mh">0x32</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;wBootCopySector&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;H&#39;</span><span class="p">),</span>  <span class="c1"># 0x0000 or 0xFFFF if unused, usually 6</span>
+        <span class="mh">0x34</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;chReserved&#39;</span><span class="p">,</span> <span class="s1">&#39;12s&#39;</span><span class="p">),</span>
+        <span class="mh">0x40</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;chPhysDriveNumber&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">),</span>
+        <span class="mh">0x41</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;chReserved1&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">),</span>
+        <span class="mh">0x42</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;chExtBootSignature&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">),</span>
+        <span class="mh">0x43</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;dwVolumeID&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;I&#39;</span><span class="p">),</span>
+        <span class="mh">0x47</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;sVolumeLabel&#39;</span><span class="p">,</span> <span class="s1">&#39;11s&#39;</span><span class="p">),</span>
+        <span class="mh">0x52</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;sFSType&#39;</span><span class="p">,</span> <span class="s1">&#39;8s&#39;</span><span class="p">),</span>
+        <span class="c1"># ~ 0x72: (&#39;chBootstrapCode&#39;, &#39;390s&#39;),</span>
+        <span class="mh">0x1FE</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;wBootSignature&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;H&#39;</span><span class="p">)</span>  <span class="c1"># 55 AA</span>
+    <span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Init FAT32 Bootcode&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__init2__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Method for updating FSInfo an calculating some offset parameter</span>
+
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;wBytesPerSector&#39;</span><span class="p">):</span> <span class="k">return</span>
+
+        <span class="c1"># Cluster size in bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wBytesPerSector</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">uchSectorsPerCluster</span>
+
+        <span class="c1"># Offset of first FAT copy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fatoffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wSectorsCount</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wBytesPerSector</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span>
+
+        <span class="c1"># Data area offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataoffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fatoffs</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">uchFATCopies</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dwSectorsPerFAT</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wBytesPerSector</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span>
+
+        <span class="c1"># Number of cluster represented in this FAT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fatsize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dwTotalLogicalSectors</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">uchSectorsPerCluster</span>
+
+<div class="viewcode-block" id="FAT32_Boot.initBootFromConfig"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32_Boot.initBootFromConfig">[docs]</a>    <span class="k">def</span> <span class="nf">initBootFromConfig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">fat32BootConfig</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initializes boot sector parameters from config.</span>
+
+<span class="sd">        :param size: disk size in bytes</span>
+<span class="sd">        :type size: int</span>
+<span class="sd">        :param fat32BootConfig: FAT32 boot sector parameter</span>
+<span class="sd">        :type fat32BootConfig: FAT32BootParameter</span>
+<span class="sd">        :return:</span>
+<span class="sd">        :rtype:</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initBoot</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="o">**</span><span class="n">fat32BootConfig</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FAT32_Boot.initBoot"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32_Boot.initBoot">[docs]</a>    <span class="k">def</span> <span class="nf">initBoot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span>
+                 <span class="n">chJumpInstruction</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\xEB\x58\x90</span><span class="s1">&#39;</span><span class="p">,</span>
+                 <span class="n">chOemId</span> <span class="o">=</span> <span class="s1">&#39;Test&#39;</span><span class="p">,</span>
+                 <span class="n">wBytesPerSector</span> <span class="o">=</span> <span class="mi">512</span><span class="p">,</span>
+                 <span class="n">uchSectorsPerCluster</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+                 <span class="n">wRsvdSectorsCount</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+                 <span class="n">uchFatCopies</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+                 <span class="n">wMaxRootEntries</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">wTotalSectors</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">uchMediaDescriptor</span><span class="o">=</span><span class="mh">0xF8</span><span class="p">,</span>
+                 <span class="n">wSectorsPerFat</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">wSectorsPerTrack</span><span class="o">=</span><span class="mi">63</span><span class="p">,</span>
+                 <span class="n">wHeads</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+                 <span class="n">wHiddenSectors</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">dwSectorsPerFat</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">dwRootCluster</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+                 <span class="n">wFSISector</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                 <span class="n">wBootCopySector</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span>
+                 <span class="n">chReserved</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00</span><span class="s1">&#39;</span><span class="p">,</span>
+                 <span class="n">chPhysDriveNumber</span> <span class="o">=</span> <span class="mh">0x80</span><span class="p">,</span>
+                 <span class="n">chReserved1</span> <span class="o">=</span> <span class="mh">0x00</span><span class="p">,</span>
+                 <span class="n">chExtBootSignature</span> <span class="o">=</span> <span class="mh">0x29</span><span class="p">,</span>
+                 <span class="n">wBootSignature</span> <span class="o">=</span> <span class="mh">0xAA55</span><span class="p">,</span>
+                 <span class="n">dwVolumeID</span> <span class="o">=</span> <span class="mi">1234567890</span><span class="p">,</span>
+                 <span class="n">sVolumeLabel</span> <span class="o">=</span> <span class="s1">&#39;TEST&#39;</span><span class="p">,</span>
+                 <span class="n">sFSType</span> <span class="o">=</span> <span class="s1">&#39;FAT32&#39;</span>
+                 <span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initializes boot sector parameters.</span>
+
+<span class="sd">        :param size: disk size in bytes</span>
+<span class="sd">        :type size: int</span>
+<span class="sd">        :param chJumpInstruction: Jump instruction code</span>
+<span class="sd">        :type chJumpInstruction: Hex-String</span>
+<span class="sd">        :param chOemId: OEM Name</span>
+<span class="sd">        :type chOemId: String</span>
+<span class="sd">        :param wBytesPerSector: Bytes per sector (default: 512)</span>
+<span class="sd">        :type wBytesPerSector: int</span>
+<span class="sd">        :param uchSectorsPerCluster: sectors per cluster</span>
+<span class="sd">        :type uchSectorsPerCluster: int</span>
+<span class="sd">        :param wRsvdSectorsCount: Size in sectors of reserved area</span>
+<span class="sd">        :type wRsvdSectorsCount: int</span>
+<span class="sd">        :param uchFatCopies: Number of FATs. Typically two</span>
+<span class="sd">        :type uchFatCopies: int</span>
+<span class="sd">        :param wMaxRootEntries: Maximum number of files in root directory, for FAT12 and FAT16 only. Has to be 0 for FAT32</span>
+<span class="sd">        :type wMaxRootEntries: int</span>
+<span class="sd">        :param wTotalSectors: 16-bit value of number of sectors in file system</span>
+<span class="sd">        :type wTotalSectors: int</span>
+<span class="sd">        :param uchMediaDescriptor: Media type. Typically 0xf8 for fixed disks and 0xf0 for removable disk.</span>
+<span class="sd">        :type uchMediaDescriptor: Hex-Value</span>
+<span class="sd">        :param wSectorsPerFat: 16-bit size in sectors of each FAT for FAT12 and FAT16. 0 for FAT32</span>
+<span class="sd">        :type wSectorsPerFat: int</span>
+<span class="sd">        :param wSectorsPerTrack: Sectors per track of storage device</span>
+<span class="sd">        :type wSectorsPerTrack: int</span>
+<span class="sd">        :param wHeads: Number of heads in storage device</span>
+<span class="sd">        :type wHeads: int</span>
+<span class="sd">        :param wHiddenSectors: Number of sectors before the start of partition</span>
+<span class="sd">        :type wHiddenSectors: int</span>
+<span class="sd">        :param dwSectorsPerFat: 32-bit size in sectors per FAT</span>
+<span class="sd">        :type dwSectorsPerFat: int</span>
+<span class="sd">        :param dwRootCluster: Root directory cluster</span>
+<span class="sd">        :type dwRootCluster: int</span>
+<span class="sd">        :param wFSISector: Sector where FSINFO structure can be found</span>
+<span class="sd">        :type wFSISector: int</span>
+<span class="sd">        :param wBootCopySector: Sector where backup copy of boot sector is  located.</span>
+<span class="sd">        :type wBootCopySector: int</span>
+<span class="sd">        :param chReserved: Reserved</span>
+<span class="sd">        :type chReserved: String</span>
+<span class="sd">        :param chPhysDriveNumber: INT13h drive number</span>
+<span class="sd">        :type chPhysDriveNumber: String</span>
+<span class="sd">        :param chReserved1: Not used</span>
+<span class="sd">        :type chReserved1: String</span>
+<span class="sd">        :param chExtBootSignature: Extended boot signature to identify the next three values are valid</span>
+<span class="sd">        :type chExtBootSignature: Char</span>
+<span class="sd">        :param wBootSignature: boot signature</span>
+<span class="sd">        :type wBootSignature:</span>
+<span class="sd">        :param dwVolumeID: Volume serial number</span>
+<span class="sd">        :type dwVolumeID: int</span>
+<span class="sd">        :param sVolumeLabel: Volume label</span>
+<span class="sd">        :type sVolumeLabel: String</span>
+<span class="sd">        :param sFSType: File system type label</span>
+<span class="sd">        :type sFSType: String</span>
+<span class="sd">        :return: None</span>
+<span class="sd">        :rtype: None</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">sectors</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">size</span> <span class="o">/</span> <span class="n">wBytesPerSector</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">sectors</span> <span class="o">&gt;</span> <span class="mh">0xFFFFFF</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s2">&quot;Too many sectors for FAT32 file system. Please lower size or higher sector size.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">FatException</span><span class="p">(</span><span class="s2">&quot;Too many sectors for FAT32 file system. Please lower size or higher sector size.&quot;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initBoot</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">chJumpInstruction</span><span class="p">,</span> <span class="n">chOemId</span><span class="p">,</span> <span class="n">wBytesPerSector</span><span class="p">,</span> <span class="n">uchSectorsPerCluster</span><span class="p">,</span> <span class="n">wRsvdSectorsCount</span><span class="p">,</span>
+                         <span class="n">uchFatCopies</span><span class="p">,</span> <span class="n">wMaxRootEntries</span><span class="p">,</span> <span class="n">wTotalSectors</span><span class="p">,</span> <span class="n">uchMediaDescriptor</span><span class="p">,</span> <span class="n">wSectorsPerFat</span><span class="p">,</span> <span class="n">wSectorsPerTrack</span><span class="p">,</span> <span class="n">wHeads</span><span class="p">,</span> <span class="n">wHiddenSectors</span><span class="p">,</span> <span class="n">sectors</span><span class="p">)</span>
+
+        <span class="n">reserved_size</span> <span class="o">=</span> <span class="n">wRsvdSectorsCount</span> <span class="o">*</span> <span class="n">wBytesPerSector</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># {cluster_size : fsinfo}</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">17</span><span class="p">):</span>  <span class="c1"># cluster sizes 0.5K...64K</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">cluster_size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">clusters</span> <span class="o">=</span> <span class="p">(</span><span class="n">size</span> <span class="o">-</span> <span class="n">reserved_size</span><span class="p">)</span> <span class="o">/</span> <span class="n">cluster_size</span>
+            <span class="n">fat_size</span> <span class="o">=</span> <span class="n">rdiv</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">clusters</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">wBytesPerSector</span><span class="p">)</span> <span class="o">*</span> <span class="n">wBytesPerSector</span>
+            <span class="n">required_size</span> <span class="o">=</span> <span class="n">cluster_size</span> <span class="o">*</span> <span class="n">clusters</span> <span class="o">+</span> <span class="n">uchFatCopies</span> <span class="o">*</span> <span class="n">fat_size</span> <span class="o">+</span> <span class="n">reserved_size</span>
+            <span class="k">while</span> <span class="n">required_size</span> <span class="o">&gt;</span> <span class="n">size</span><span class="p">:</span>
+                <span class="n">clusters</span> <span class="o">-=</span> <span class="mi">1</span>
+                <span class="n">fat_size</span> <span class="o">=</span> <span class="n">rdiv</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="p">(</span><span class="n">clusters</span> <span class="o">+</span> <span class="mi">2</span><span class="p">),</span> <span class="n">wBytesPerSector</span><span class="p">)</span> <span class="o">*</span> <span class="n">wBytesPerSector</span>
+                <span class="n">required_size</span> <span class="o">=</span> <span class="n">cluster_size</span> <span class="o">*</span> <span class="n">clusters</span> <span class="o">+</span> <span class="n">uchFatCopies</span> <span class="o">*</span> <span class="n">fat_size</span> <span class="o">+</span> <span class="n">reserved_size</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">clusters</span> <span class="o">&lt;</span> <span class="mi">65526</span> <span class="p">)</span> <span class="ow">or</span> <span class="n">clusters</span> <span class="o">&gt;</span> <span class="mh">0x0FFFFFF6</span><span class="p">:</span>  <span class="c1"># MS imposed limits</span>
+                <span class="k">continue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;required_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">required_size</span><span class="p">)</span>  <span class="c1"># space occupied by FS</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;reserved_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reserved_size</span>  <span class="c1"># space reserved before FAT#1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;cluster_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cluster_size</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;fat_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fat_size</span><span class="p">)</span>  <span class="c1"># space occupied by a FAT copy</span>
+            <span class="n">allowed</span><span class="p">[</span><span class="n">cluster_size</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span>
+
+        <span class="c1"># TODO: Which sector per Fat to choose?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span> <span class="o">=</span> <span class="n">allowed</span><span class="p">[</span><span class="n">wBytesPerSector</span> <span class="o">*</span> <span class="n">uchSectorsPerCluster</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;clusters&#39;</span><span class="p">]</span>
+        <span class="c1"># calculated, if parameter is not 0 than value ist set without validation</span>
+        <span class="k">if</span> <span class="n">dwSectorsPerFat</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dwSectorsPerFAT</span> <span class="o">=</span> <span class="n">dwSectorsPerFat</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dwSectorsPerFAT</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fsinfo</span><span class="p">[</span><span class="s1">&#39;fat_size&#39;</span><span class="p">]</span><span class="o">/</span><span class="n">wBytesPerSector</span><span class="p">)</span>
+
+        <span class="c1"># TODO: wMirroringFlags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wMirroringFlags</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># TODO: wVersion</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wVersion</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dwRootCluster</span> <span class="o">=</span> <span class="n">dwRootCluster</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wFSISector</span> <span class="o">=</span> <span class="n">wFSISector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wBootCopySector</span> <span class="o">=</span> <span class="n">wBootCopySector</span>
+
+        <span class="c1"># TODO: chReserved filling</span>
+        <span class="c1">#self.chReserved = b&#39;\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chReserved</span> <span class="o">=</span> <span class="n">chReserved</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">chPhysDriveNumber</span> <span class="o">=</span> <span class="n">chPhysDriveNumber</span>
+
+        <span class="c1"># TODO: chFlags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chReserved1</span> <span class="o">=</span> <span class="n">chReserved1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">chExtBootSignature</span> <span class="o">=</span> <span class="n">chExtBootSignature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wBootSignature</span> <span class="o">=</span> <span class="n">wBootSignature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dwVolumeID</span> <span class="o">=</span> <span class="n">dwVolumeID</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sVolumeLabel</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="si">%-11s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">sVolumeLabel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sFSType</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="si">%-8s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="sa">b</span><span class="s1">&#39;FAT32&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__init2__</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="FAT32_Boot.fat"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32_Boot.fat">[docs]</a>    <span class="k">def</span> <span class="nf">fat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fatcopy</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns position of given fatcopy in bytes</span>
+
+<span class="sd">        :param fatcopy: Number of fatcopy (0: default, 1: first copy)</span>
+<span class="sd">        :return: Position of FAT in bytes</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fatoffs</span> <span class="o">+</span> <span class="n">fatcopy</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dwSectorsPerFAT</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wBytesPerSector</span></div>
+
+<div class="viewcode-block" id="FAT32_Boot.root"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32_Boot.root">[docs]</a>    <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns the real offset of the root directory</span>
+
+<span class="sd">        :return: Offset of root directory</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cl2offset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dwRootCluster</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FAT32_Boot.cl2offset"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32_Boot.cl2offset">[docs]</a>    <span class="k">def</span> <span class="nf">cl2offset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Returns the real offset of a cluster from disk start</span>
+
+<span class="sd">        :param cluster: Number of cluster</span>
+<span class="sd">        :return: Offset of cluster</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataoffs</span> <span class="o">+</span> <span class="p">(</span><span class="n">cluster</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster</span></div></div>
+
+
+
+
+<div class="viewcode-block" id="FAT32FSINFO"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32FSINFO">[docs]</a><span class="k">class</span> <span class="nc">FAT32FSINFO</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="p">{</span>  <span class="c1"># { offset: (name, unpack string) }</span>
+        <span class="mh">0x00</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;sSignature1&#39;</span><span class="p">,</span> <span class="s1">&#39;4s&#39;</span><span class="p">),</span>  <span class="c1"># RRaA</span>
+        <span class="mh">0x04</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;sReserved1&#39;</span><span class="p">,</span> <span class="s1">&#39;480s&#39;</span><span class="p">),</span>
+        <span class="mh">0x1E4</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;sSignature2&#39;</span><span class="p">,</span> <span class="s1">&#39;4s&#39;</span><span class="p">),</span>  <span class="c1"># rrAa</span>
+        <span class="mh">0x1E8</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;dwFreeClusters&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;I&#39;</span><span class="p">),</span>  <span class="c1"># 0xFFFFFFFF if unused (may be incorrect)</span>
+        <span class="mh">0x1EC</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;dwNextFreeCluster&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;I&#39;</span><span class="p">),</span>  <span class="c1"># hint only (0xFFFFFFFF if unused)</span>
+        <span class="mh">0x1F0</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;sReserved2&#39;</span><span class="p">,</span> <span class="s1">&#39;12s&#39;</span><span class="p">),</span>
+        <span class="mh">0x1FE</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;wBootSignature&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;H&#39;</span><span class="p">)</span>  <span class="c1"># 55 AA</span>
+    <span class="p">}</span>  <span class="c1"># Size = 0x200 (512 byte)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Init FAT32 FSINFO&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="mi">512</span><span class="p">)</span>  <span class="c1"># normal FSInfo sector size</span>
+        <span class="k">pass</span>
+
+    <span class="fm">__getattr__</span> <span class="o">=</span> <span class="n">common_getattr</span>
+
+<div class="viewcode-block" id="FAT32FSINFO.pack"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32FSINFO.pack">[docs]</a>    <span class="k">def</span> <span class="nf">pack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s2">&quot;Update internal buffer&quot;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kv</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Packing Fat boot sector parameters: &quot;</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span><span class="p">[</span><span class="n">k</span><span class="p">:</span><span class="n">k</span><span class="o">+</span><span class="n">struct</span><span class="o">.</span><span class="n">calcsize</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_buf</span></div>
+
+<div class="viewcode-block" id="FAT32FSINFO.initFsInfoFromConfig"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32FSINFO.initFsInfoFromConfig">[docs]</a>    <span class="k">def</span> <span class="nf">initFsInfoFromConfig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">fsInfoConfig</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initFSInfo</span><span class="p">(</span><span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">fsInfoConfig</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FAT32FSINFO.initFSInfo"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.FAT32FSINFO.initFSInfo">[docs]</a>    <span class="k">def</span> <span class="nf">initFSInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sSignature1</span> <span class="o">=</span><span class="s1">&#39;RRaA&#39;</span><span class="p">,</span> <span class="n">sReserved1</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">sSignature2</span> <span class="o">=</span><span class="s1">&#39;rrAa&#39;</span><span class="p">,</span> <span class="n">dwFreeClusters</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dwNextFreeCluster</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">sReserved2</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">wBootSignature</span> <span class="o">=</span> <span class="mh">0xAA55</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span> <span class="o">=</span> <span class="n">offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sSignature1</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">sSignature1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sSignature2</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">sSignature2</span><span class="p">)</span>
+
+        <span class="c1"># Transform sReserved1 to Bytearray, length 480</span>
+        <span class="n">reserved1</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="mi">480</span><span class="p">)</span>
+        <span class="n">reserved1</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">sReserved1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sReserved1</span> <span class="o">=</span> <span class="n">reserved1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dwFreeClusters</span> <span class="o">=</span> <span class="n">dwFreeClusters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dwNextFreeCluster</span> <span class="o">=</span> <span class="n">dwNextFreeCluster</span>
+        <span class="n">reserved2</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">reserved2</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">sReserved2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sReserved2</span> <span class="o">=</span> <span class="n">reserved2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wBootSignature</span> <span class="o">=</span> <span class="n">wBootSignature</span></div></div>
+
+
+
+
+
+
+<div class="viewcode-block" id="rdiv"><a class="viewcode-back" href="../../filesystem.html#filesystem.fat32.rdiv">[docs]</a><span class="k">def</span> <span class="nf">rdiv</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="s2">&quot;Divide a by b eventually rounding up&quot;</span>
+    <span class="k">if</span> <span class="n">a</span> <span class="o">%</span> <span class="n">b</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">SyntheticDisc</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystem.html">filesystem package</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Michael Koll.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.9</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

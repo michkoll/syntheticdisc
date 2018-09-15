@@ -1,3 +1,5 @@
+
+
 import struct
 import sys
 import ruamel.yaml
@@ -19,9 +21,9 @@ logging.basicConfig(level=logging.DEBUG,
 
 #print(struct.unpack('4s',b'\x18\x06\x00\x00'))
 
-disk = Disk("images/Testimage.img", 'r+b', 0)
-fat = FAT32(disk)
-fat.boot.initBoot(disk.size, chOemId='next', sVolumeLabel='Blubb')
+disk = Disk("../tests/images/Testimage.img", 'r+b', 0)
+fat = FAT32(stream=disk)
+fat.boot.mkfat(disk.size, chOemId='next', sVolumeLabel='Blubb')
 fat.fsinfo.initFSInfo(offset=fat.boot.wBytesPerSector, dwFreeClusters=fat.boot._clusters - 1, dwNextFreeCluster=3)
 #disk.seek(0)
 #disk.write(fat.boot.pack())
