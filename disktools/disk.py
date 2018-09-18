@@ -51,7 +51,7 @@ class Disk(object):
         logging.debug("si=%Xh lastsi=%Xh so=%Xh", self.si, self.lastsi, self.so)
 
     def write(self, s):
-        logging.debug("request to write %d bytes @%Xh", len(s), self.pos)
+        logging.debug("request to write %d bytes @%Xh", len(s), int(self.pos))
         if len(s) == 0: return
         # If we have to complete a sector...
         if self.so:

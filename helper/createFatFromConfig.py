@@ -60,7 +60,7 @@ f1.close()
 f2 = ch.create('LangeDatei.txt')
 f2.File.write(boot.cluster * b'A' + boot.cluster * b'a' + boot.cluster * b'A')
 
-
+ch2 = subdir.mkdir('Child2')
 
 
 

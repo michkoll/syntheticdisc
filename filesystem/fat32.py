@@ -1102,8 +1102,8 @@ class Chain(object):
             if vcn <= self.vcn < vcn+count:
                 lcn = start + self.vcn - vcn
                 #~ print "Chain%08X: mapped VCN %d to LCN %Xh (LBA %Xh)"%(self.start, self.vcn, lcn, self.boot.cl2offset(lcn))
-                logging.debug("Chain%08X: mapped VCN %d to LCN %Xh (%d), LBA %Xh", int(self.start), self.vcn, int(lcn), lcn, self.boot.cl2offset(lcn))
-                logging.debug("Chain%08X: seeking cluster offset %Xh (%d)", self.start, self.vco, self.vco)
+                logging.debug("Chain%08X: mapped VCN %d to LCN %Xh (%d), LBA %Xh", int(self.start), self.vcn, int(lcn), lcn, int(self.boot.cl2offset(lcn)))
+                logging.debug("Chain%08X: seeking cluster offset %Xh (%d)", int(self.start), int(self.vco), self.vco)
                 self.stream.seek(self.boot.cl2offset(lcn)+self.vco)
                 self.lastvlcn = (self.vcn, lcn)
                 #~ print "Set lastvlcn", self.lastvlcn
@@ -1142,7 +1142,7 @@ class Chain(object):
 
     def write(self, s):
         if not s: return
-        logging.debug("Chain%08X: write(buf[:%d]) called from offset %Xh (%d), VCN %Xh(%d)[%Xh:]", self.start, len(s), self.pos, self.pos, self.vcn, self.vcn, self.vco)
+        logging.debug("Chain%08X: write(buf[:%d]) called from offset %Xh (%d), VCN %Xh(%d)[%Xh:]", int(self.start), len(s), int(self.pos), self.pos, int(self.vcn), self.vcn, int(self.vco))
         new_allocated = 0
         if self.pos + len(s) > self.size:
             # Alloc more clusters from actual last one
@@ -1308,7 +1308,7 @@ class Handle(object):
 
         self.Dir.stream.seek(self.Entry._pos)
         logging.debug('Closing Handle @%Xh(%Xh) to "%s", cluster=%Xh tell=%d chain=%d size=%d', \
-        self.Entry._pos, self.Dir.stream.realtell(), os.path.join(self.Dir.path,self.Entry.Name()), self.Entry.Start(), self.File.pos, self.File.size, self.File.filesize)
+        int(self.Entry._pos), int(self.Dir.stream.realtell()), os.path.join(self.Dir.path,self.Entry.Name()), int(self.Entry.Start()), self.File.pos, self.File.size, self.File.filesize)
         self.Dir.stream.write(self.Entry.pack())
         self.IsValid = False
         self.Dir._update_dirtable(self.Entry)
