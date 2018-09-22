@@ -4,9 +4,10 @@ import sys
 import ruamel
 
 from util.enums import PositionType
-from workflow.rawSteps import RawWriteStep
+from workflow.rawSteps import *
 from workflow.workflow import Workflow
-from workflow.fatSteps import FAT32CreateBootSectorStep
+from workflow.fatSteps import *
+from workflow.diskSteps import *
 
 
 def createWorkflowYaml(yamlPath):

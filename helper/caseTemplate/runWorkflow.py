@@ -5,6 +5,7 @@ import logging
 import ruamel
 from workflow.fatSteps import *
 from workflow.rawSteps import *
+from workflow.diskSteps import *
 from workflow.workflow import Workflow, WorkflowStep
 
 logPath = "./"
