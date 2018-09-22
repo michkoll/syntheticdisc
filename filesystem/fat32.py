@@ -119,7 +119,7 @@ class FATCreator(object):
         fsinfo = {}
         fsinfo['reserved_size'] = wRsvdSectorsCount * wBytesPerSector
         fsinfo['cluster_size'] = wBytesPerSector * uchSectorsPerCluster
-        fsinfo['clusters'] = (size - fsinfo['reserved_size']) / fsinfo['cluster_size']
+        fsinfo['clusters'] = (size - fsinfo['reserved_size']) // fsinfo['cluster_size']
         fsinfo['fat_size'] = rdiv(4 * (fsinfo['clusters'] + 2), wBytesPerSector) * wBytesPerSector
         fsinfo['required_size'] = fsinfo['cluster_size'] * fsinfo['clusters'] + uchFatCopies * fsinfo['fat_size'] + fsinfo['reserved_size']
 
@@ -174,10 +174,11 @@ class FATCreator(object):
         boot.sFSType = b'%-8s' % str.encode(sFSType)
 
         fsi = FAT32FSINFO(offset=wBytesPerSector)
+        fsi.initFSInfo()
         if fsInfoConfig:
             fsi.initFsInfoFromConfig(fsInfoConfig)
 
-        if fsi.dwFreeClusters == 0:
+        if fsi.dwFreeClusters == 0 and fsInfoConfig is None:
             logging.debug("Automatic correction of free cluster field in FSINO (Count: {0})".format(fsinfo['clusters'] - 1))
             fsi.dwFreeClusters = int(fsinfo['clusters'] - 1)
 
@@ -224,19 +225,6 @@ class FATCreator(object):
             boot.fatoffs, boot.cl2offset(2), 2, boot.cl2offset(2)))
         return boot, fsi
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 class FAT32(object):
     '''
     Parent class for all FAT32 operations.
@@ -247,7 +235,7 @@ class FAT32(object):
     def __init__(self, s=None, stream = None):
         self.stream = stream
         self.boot = FAT32_Boot(s=s, stream=stream)
-        self.fsinfo = FAT32FSINFO()
+        self.fsinfo = FAT32FSINFO(s=stream.read(512), stream=stream, offset=self.boot.wBytesPerSector)
 
 
     def writeNew(self):
@@ -385,6 +373,9 @@ class FAT32_Boot(object):
             self.fsinfo = None
 
     __getattr__ = common_getattr
+
+    def __str__ (self):
+        return class2str(self, "FAT32 Boot Sector @%x\n" % self._pos)
 
     def mkfatFromConfig(self, size, fat32BootConfig, fsinfoConfig):
         '''
@@ -625,7 +616,7 @@ class FAT32_Boot(object):
         :return: Number of clusters in data area
         :rtype: int
         '''
-        return (self.dwTotalLogicalSectors - (self.dataoffs/self.wBytesPerSector)) / self.uchSectorsPerCluster
+        return (self.dwTotalLogicalSectors - (self.dataoffs//self.wBytesPerSector)) // self.uchSectorsPerCluster
 
 
 
@@ -646,12 +637,6 @@ class FAT32FSINFO(object):
         self._i = 0
         self._pos = offset
         self._buf = s or bytearray(512)
-        # if s:
-        #     self._buf = s
-        # elif stream:
-        #     self._buf = stream.read(512, offset=offset)
-        # else:
-        #     self._buf = bytearray(512)  # normal FSInfo sector size
         self.stream = stream
         self._kv = self.layout.copy()
         self._vk = {}  # { name: offset}
@@ -660,6 +645,9 @@ class FAT32FSINFO(object):
             getattr(self, v[0])
 
     __getattr__ = common_getattr
+
+    def __str__ (self):
+        return class2str(self, "FAT32 FSInfo Sector @%x\n" % self._pos)
 
     def pack(self):
         "Update internal buffer"

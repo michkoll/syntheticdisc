@@ -20,6 +20,8 @@ filesystem.fat32 module
     :undoc-members:
     :show-inheritance:
 
+.. inheritance-diagram:: filesystem.fat32.FAT
+   :parts: 1
 
 Module contents
 ---------------

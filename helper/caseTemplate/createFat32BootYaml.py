@@ -1,3 +1,5 @@
+import os
+
 import ruamel.yaml
 import logging
 
@@ -12,7 +14,7 @@ logging.basicConfig(level=logging.DEBUG,
         logging.StreamHandler()
     ])
 
-def createYaml():
+def createBootYaml(destPath):
     yaml = ruamel.yaml.YAML()
 
     yaml.register_class(FAT32BootParameter)
@@ -55,15 +57,20 @@ def createYaml():
 
     fat32 = FAT32Parameter(bootparam, fsinfo)
 
-    with open('yaml/fat32bootnew.yml', 'w') as outfile:
+    with open(os.path.join(destPath, 'fat32boot.yml'), 'w') as outfile:
         yaml.dump(bootparam, outfile)
 
-    with open('yaml/fat32fsinew.yml', 'w') as outfileFSI:
+    with open(os.path.join(destPath, 'fsinfo.yml'), 'w') as outfileFSI:
         yaml.dump(fsinfo, outfileFSI)
 
-    with open('yaml/fat32new.yml', 'w') as outfileParam:
+    with open(os.path.join(destPath, 'fat32.yml'), 'w') as outfileParam:
         yaml.dump(fat32, outfileParam)
 
 
+
 if __name__ == "__main__":
-    createYaml()
+    parser = argparse.ArgumentParser(description="Create workflow and save to yaml file")
+    parser.add_argument("destPath", help="destination path for boot config")
+    args = parser.parse_args()
+
+    createBootYaml(yamlPath=args.destPath)

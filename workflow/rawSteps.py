@@ -1,17 +1,12 @@
 from ruamel.yaml import YAML, yaml_object
 
-from util.enums import PositionType
-from workflow.workflow import WorkflowStep
+from util.enums import *
+from workflow.workflow import WorkflowStep, WorkflowLog
 
 yaml = YAML()
 
-
-
 @yaml_object(yaml)
 class RawWriteStep(WorkflowStep):
-    '''
-    Step implementation for writing directly to disk.
-    '''
     yaml_tag = u'!rawWrite'
 
     def __init__(self, workflow, content, description = 'RawWriteStep', position = 0, positionType = 1):
@@ -36,12 +31,10 @@ class RawWriteStep(WorkflowStep):
         elif self.positionType == PositionType.SECTOR.value:
             disk.seek(self.position * disk.blocksize)
         disk.write(self.content)
+        return WorkflowLog(self, "execute", WorkflowStatus.SUCCESS, LogType.LOG)
 
     def validate(self):
-        pass
-
-    def log(self):
-        pass
+        return WorkflowLog(self, "validate", WorkflowStatus.SUCCESS, LogType.LOG)
 
     def check(self):
-        pass
+        return self.returnSuccessLog(self, "check", "No check implemented")

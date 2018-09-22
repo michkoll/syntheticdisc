@@ -1,11 +1,25 @@
 !workflow
 steps:
-- !rawWrite
-  description: Parent
-  position: 1
-  content: !!binary |
-    VGVzdGluZw==
-  positionType: 2
+- !createImage
+  description: Create new blank image file
+  srcDisk:
+  destDisk: ../tests/images/Testimage_new.img
+  diskSize: 268435456
 - !FAT32CreateBootSector
   description: Write FAT32 BootSector
-  pathToConfig: /datadisk/Repos/github/syntheticdisc/tests/yaml/fat32.yml
+  pathToConfig: /datadisk/Repos/github/syntheticdisc/helper/yaml/fat32.yml
+- !createDir
+  description: Create first directory!
+  parentDir:
+  dirName: First
+  deleted: false
+- !createDir
+  description: Create subdir
+  parentDir: First
+  dirName: Subdir
+  deleted: false
+- !createDir
+  description: Create sub subdir
+  parentDir: First/Subdir
+  dirName: SubSubdir
+  deleted: false

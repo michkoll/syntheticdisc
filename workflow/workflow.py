@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod, ABCMeta
 import logging
 from ruamel.yaml import YAML, yaml_object, YAMLObject
 
+
 from disktools.disk import Disk
 from util.commonYaml import yamlObject
 from util.enums import *
@@ -17,11 +18,31 @@ class WorkflowValidationException(Exception):
         self.reason = reason
         self.msg = "Error validating attribute {0} in step {1}. Reason: {2}".format(parameter, step, reason)
 
+class WorkflowLog(object):
+    def __init__(self, step, method, status: WorkflowStatus, logtype = LogType.LOG, reason: str = "No reason defined"):
+        self.stepName = type(step).__name__
+        self.status = status
+        self.logtype = logtype
+        self.reason = reason
+        self.method = method
+
+    def getLogString(self):
+        if self.status is not WorkflowStatus.FAILED:
+            return "[{0}] Step {1}:{2} successful. Message: {3}".format(self.status.name, self.stepName, self.method, self.reason)
+
+        elif self.status == WorkflowStatus.FAILED:
+            if self.logtype == LogType.VALIDATIONERROR:
+                return "[{0}] Step {1}:{2} failed with {3}. Reason: {4}".format(self.status.name, self.stepName, self.method, self.logtype.name, self.reason)
+
+
 
 yaml = YAML()
 
 @yaml_object(yaml)
 class Workflow(yamlObject):
+    '''
+
+    '''
     yaml_tag = u'!workflow'
     _log = []
 
@@ -37,16 +58,8 @@ class Workflow(yamlObject):
 
         for step in self.steps:
             try:
-                resultValidate = step.validate()
-                if resultValidate is None:
+                if step.hasWorkflow(self):
                     step.run(disk)
-                    step.log()
-                    step.check()
-                else:
-                    self._log.append(result)
-                    print(result.getLogString())
-                    exit(1)
-
             except WorkflowValidationException as e:
                 logging.error(e.msg)
                 exit(1)
@@ -57,6 +70,11 @@ class Workflow(yamlObject):
             raise TypeError("Must be of type workflowStep!")
         else:
             self.steps.append(step)
+
+    def addLog(self, logEntry: WorkflowLog):
+        if logEntry and isinstance(logEntry, WorkflowLog):
+            self._log.append(logEntry)
+            logging.info(logEntry.getLogString())
 
 
 @yaml_object(yaml)
@@ -77,20 +95,23 @@ class WorkflowStep(yamlObject):
         self.description = description
         self._status = None
 
-    def run(self, disk):
+    def run(self, disk = None):
         '''
         Executes workflow step with validation and logging. Method of parent class has to be called at the end of each step.
 
         :param disk: Disk object for writing
         :return: None
         '''
-        if not isinstance(disk, Disk):
-            raise TypeError("Must be of type Disk!")
-        self.execute(disk)
-        self.check()
-        self.log()
-
-
+        if disk is not None and not isinstance(disk, Disk):
+            raise TypeError("Must be of type Disk or None!")
+        validateResult = self.validate()
+        self._workflow.addLog(validateResult)
+        if validateResult.status is not WorkflowStatus.FAILED:
+            executeResult = self.execute(disk)
+            self._workflow.addLog(executeResult)
+            if executeResult.status is not WorkflowStatus.FAILED:
+                checkResult = self.check()
+                self._workflow.addLog(checkResult)
 
     def validate(self):
         '''
@@ -105,27 +126,22 @@ class WorkflowStep(yamlObject):
     def check(self):
         raise NotImplementedError("check {0}".format(self.__class__))
 
-    def log(self):
-        raise NotImplementedError("log {0}".format(self.__class__))
-
     def addStep(self, step):
         if not isinstance(step, WorkflowStep):
             raise TypeError("Must be of type workflowStep!")
         else:
             self.steps.append(step)
 
-class WorkflowLog(object):
-    def __init__(self, step, status: WorkflowStatus, type = LogType.LOG, **kwargs):
-        self.stepName = step
-        self.status = status
-        self.type = type
-        self.kwargs  = kwargs
+    def hasWorkflow(self, workflow: Workflow):
+        if hasattr(self, '_workflow'):
+            if isinstance(self._workflow, Workflow):
+                return True
+        elif isinstance(workflow, Workflow):
+            self._workflow = workflow
+            return True
+        else:
+            return False
 
-    def getLogString(self):
-        if self.status == WorkflowStatus.SUCCESS:
-            return "[{0}] Step {1} successful.".format(self.status.name, self.stepName)
-
-        elif self.status == WorkflowStatus.FAILED:
-            if self.type == LogType.VALIDATIONERROR:
-                return "[{0}] Step {1} failed with {2}. Reason: {3}".format(self.status.name, self.stepName, self.type.name, self.kwargs["reason"].name)
+    def returnSuccessLog(self, step, methodName: str, message: str = "No message."):
+        return WorkflowLog(step, methodName, WorkflowStatus.SUCCESS, LogType.LOG, reason=message)
 

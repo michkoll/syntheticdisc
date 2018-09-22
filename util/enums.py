@@ -36,6 +36,7 @@ class ErrorReason(Enum):
 class WorkflowStatus(Enum):
     SUCCESS = 1
     FAILED = 2
+    WARN = 3
 
     @classmethod
     def to_yaml(cls, representer, node):

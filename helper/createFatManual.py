@@ -1,15 +1,10 @@
-
-
-import struct
-import sys
-import ruamel.yaml
-
 from disktools.disk import Disk
 import logging
 
-from filesystem.fat import FAT, FAT_Boot
-from filesystem.fat32 import FAT32, FAT32_Boot
+from filesystem.fat32 import FATCreator
 
+# log configuration
+loglevel = logging.DEBUG
 logPath = "./"
 fileName = "Disk"
 logging.basicConfig(level=logging.DEBUG,
@@ -19,16 +14,21 @@ logging.basicConfig(level=logging.DEBUG,
         logging.StreamHandler()
     ])
 
-#print(struct.unpack('4s',b'\x18\x06\x00\x00'))
+FILENAME = "../tests/images/Testimage.img"
 
-disk = Disk("../tests/images/Testimage.img", 'r+b', 0)
-fat = FAT32(stream=disk)
-fat.boot.mkfat(disk.size, chOemId='next', sVolumeLabel='Blubb')
-fat.fsinfo.initFSInfo(offset=fat.boot.wBytesPerSector, dwFreeClusters=fat.boot._clusters - 1, dwNextFreeCluster=3)
-#disk.seek(0)
-#disk.write(fat.boot.pack())
-#disk.write(fat.fsinfo.pack())
-fat.writeNew()
+def createNewFat():
+    # Create instance of Disk object for further reading and writing access to image file
+    # The image file has to be created before
+    disk = Disk(FILENAME, 'r+b', 0)
+
+    # Creates new fat boot sector and fsinfo objects with example values and writes structures to disk
+    fat = FATCreator.mkfat32(stream=disk,
+                                size=disk.size,
+                                wBytesPerSector=512,
+                                uchSectorsPerCluster=2,
+                                chOemId='Test',
+                                sVolumeLabel='Demonstrate')
 
 
-print(disk)
+if __name__ == "__main__":
+    createNewFat()

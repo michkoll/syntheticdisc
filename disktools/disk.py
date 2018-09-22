@@ -31,6 +31,18 @@ class Disk(object):
         return "Filename: " + self._file.name + "\t Mode: " + self.mode + "\t Size: " + str(self.size)
 
     def seek(self, offset, whence=0, force=0):
+        '''
+        Sets the position on the disk image for write and read operations.
+
+        :param offset: Offset in Bytes
+        :type offset: int
+        :param whence: Defines the behavior of positioning (1: Add offset to current position, 2: Subtract offset from current position, 3: Sets position to offset
+        :type whence: int
+        :param force: 0 (False) if position should be aligned to sector, 1 (True) for allowing positioning in sectors.
+        :type force: int
+        :return: None
+        :rtype: None
+        '''
         if whence == 1:
             self.pos += offset
         elif whence == 2:
