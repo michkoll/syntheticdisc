@@ -36,7 +36,7 @@ def main(yamlPath):
     file1 = CreateFileStep(workflow=workflow, description="Create first file", cDate="2016-01-01 02:02:02",
                                         mDate="2016-01-02 02:02:02",
                                        aDate="2016-01-03 02:02:02", fullPath="/First/Test.txt", deleted=True, content="Das ist ein Test")
-
+    file2 = CreateFileStep(workflow=workflow, description="File from file", contentFile="files/content.txt", fullPath="/First/content.txt")
     # Adding steps to workflow
     workflow.addStep(diskStep)
     #workflow.addStep(rawStep)
@@ -47,7 +47,8 @@ def main(yamlPath):
 
     workflow.addStep(mkSubSubdirStep)
     workflow.addStep(file1)
-    workflow.addStep(mkSubSubdirStepDel)
+    #workflow.addStep(mkSubSubdirStepDel)
+    workflow.addStep(file2)
     # Write workflow to yaml config file
     yaml = ruamel.yaml.YAML()
     with open(yamlPath, 'w') as fout:

@@ -33,7 +33,7 @@ def readConfig(path):
 def prepareDisk():
     if mainConfig.blankDisk or os.path.exists(mainConfig.diskSrc):
         mkimage.createImageFile(mainConfig.diskDest, size=mainConfig.imageSize)
-        logging.info("Created image with size {0}: {1}".format(mainConfig.imageSize, mainConfig.destDisk))
+        logging.info("Created image with size {0}: {1}".format(mainConfig.imageSize, mainConfig.diskDest))
     else:
         copyfile(mainConfig.diskSrc, mainConfig.diskDest)
         logging.info("Copied image {0} to {1}".format(mainConfig.diskSrc, mainConfig.diskDest))
@@ -53,6 +53,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     readConfig(args.configPath)
+
+    if mainConfig.logLevel == 3:
+        logging.basicConfig(level=logging.DEBUG,
+                        format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+                        handlers=[
+                            logging.FileHandler(mainConfig.logPath),
+                            logging.StreamHandler()
+                        ])
+    else:
+        logging.basicConfig(level=logging.INFO,
+                            format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+                            handlers=[
+                                logging.FileHandler(mainConfig.logPath),
+                                logging.StreamHandler()
+                            ])
+
     prepareDisk()
     prepareWorkflow()
     prepareBootConfig()

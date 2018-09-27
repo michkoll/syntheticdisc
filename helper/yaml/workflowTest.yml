@@ -45,12 +45,15 @@ steps:
   cDate: '2016-01-01 02:02:02'
   aDate: '2016-01-03 02:02:02'
   content: Das ist ein Test
-- !createDir
-  description: Create sub subdir
-  fullPath:
-  parentDir: First/Subdir
-  dirName: SubSubdir
-  deleted: true
-  mDate: '2016-01-02 02:02:02'
-  cDate: '2016-01-01 02:02:02'
-  aDate: '2016-01-03 02:02:02'
+  contentFile:
+- !createFile
+  description: File from file
+  fullPath: /First/content.txt
+  parentDir:
+  fileName:
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+  content:
+  contentFile: files/content.txt

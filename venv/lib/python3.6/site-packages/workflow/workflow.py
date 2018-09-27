@@ -60,6 +60,7 @@ class Workflow(yamlObject):
             try:
                 if step.hasWorkflow(self):
                     step.run(disk)
+                    disk.cache_flush()
             except WorkflowValidationException as e:
                 logging.error(e.msg)
                 exit(1)
@@ -107,9 +108,11 @@ class WorkflowStep(yamlObject):
         validateResult = self.validate()
         self._workflow.addLog(validateResult)
         if validateResult.status is not WorkflowStatus.FAILED:
+            disk.cache_flush()
             executeResult = self.execute(disk)
             self._workflow.addLog(executeResult)
             if executeResult.status is not WorkflowStatus.FAILED:
+                disk.cache_flush()
                 checkResult = self.check()
                 self._workflow.addLog(checkResult)
 

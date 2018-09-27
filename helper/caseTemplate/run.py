@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 from shutil import copyfile
 
@@ -36,5 +37,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     readConfig(args.configPath)
+
+    if mainConfig.logLevel == 3:
+        logging.basicConfig(level=logging.DEBUG,
+                        format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+                        handlers=[
+                            logging.FileHandler(mainConfig.logPath),
+                            logging.StreamHandler()
+                        ])
+    else:
+        logging.basicConfig(level=logging.INFO,
+                            format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+                            handlers=[
+                                logging.FileHandler(mainConfig.logPath),
+                                logging.StreamHandler()
+                            ])
+
     prepareDisk()
     run()

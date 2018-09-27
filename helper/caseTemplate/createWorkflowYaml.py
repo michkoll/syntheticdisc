@@ -14,7 +14,7 @@ def createWorkflowYaml(yamlPath):
     # Initialize workflow
     workflow = Workflow()
 
-    # EXAMPLE AREA - DELETE BEFORE
+    # EXAMPLE AREA - DELETE BEFORE EXECUTION
     # Create RawWriteStep
     rawStep = RawWriteStep(workflow, content=b'Testing', description="Write test string", position=1, positionType=PositionType.SECTOR)
     # Create step for loading boot sector from config file an write to disk
@@ -23,7 +23,7 @@ def createWorkflowYaml(yamlPath):
     # Adding steps to workflow
     workflow.addStep(rawStep)
     workflow.addStep(fatStep)
-    # EXAMPLE AREA - DELETE BEFORE
+    # EXAMPLE AREA - DELETE BEFORE EXECUTION
 
     # Write workflow to yaml config file
     yaml = ruamel.yaml.YAML()

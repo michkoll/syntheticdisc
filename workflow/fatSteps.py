@@ -115,7 +115,7 @@ class CreateFileStep(WorkflowStep):
     yaml_tag = u'!createFile'
 
     def __init__(self, workflow, description="Default description", fullPath: str = None, parentDir: str = None,
-                 fileName: str = None, deleted: bool = False, mDate = None, cDate = None, aDate = None, content: str = None):
+                 fileName: str = None, deleted: bool = False, mDate = None, cDate = None, aDate = None, content: str = None, contentFile: str = None):
         super().__init__(workflow, description)
         self.fullPath = fullPath
         self.parentDir = parentDir
@@ -125,11 +125,23 @@ class CreateFileStep(WorkflowStep):
         self.cDate = cDate
         self.aDate = aDate
         self.content = content
+        self.contentFile = contentFile
 
     def validate(self):
         if self.fullPath is not None:
             self.parentDir = os.path.dirname(os.path.normpath(self.fullPath))
             self.fileName = os.path.basename(os.path.normpath(self.fullPath))
+
+        if self.contentFile is not None:
+            if os.path.exists(os.path.join("/datadisk/Repos/github/syntheticdisc/cases/createFat", self.contentFile)):
+                self.contentFile = os.path.join("/datadisk/Repos/github/syntheticdisc/cases/createFat", self.contentFile)
+                with open(self.contentFile, mode='rb') as inFile:
+                    self.content = inFile.read()
+
+        try:
+            self.content = self.content.encode(encoding=FS_ENCODING)
+        except AttributeError:
+            pass
 
         if self.fileName is None:
             return WorkflowLog(self, "validate", WorkflowStatus.FAILED, logtype=LogType.VALIDATIONERROR, reason="No dirName specified.")
@@ -161,7 +173,7 @@ class CreateFileStep(WorkflowStep):
                                                                                       self.fileName))
 
         if self.content is not None:
-            f.write(self.content.encode(encoding=FS_ENCODING))
+            f.write(self.content)
             #f.close()
 
 
@@ -187,7 +199,7 @@ class CreateFileStep(WorkflowStep):
 
 
         return self.returnSuccessLog(self, "execute",
-                                     "Created directory {0} in dir {1}. Deleted: {2}".format(self.fileName,
+                                     "Created file {0} in dir {1}. Deleted: {2}".format(self.fileName,
                                                                                              self.parentDir,
                                                                                              self.deleted))
 

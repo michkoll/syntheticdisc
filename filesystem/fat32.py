@@ -178,7 +178,7 @@ class FATCreator(object):
         if fsInfoConfig:
             fsi.initFsInfoFromConfig(fsInfoConfig)
 
-        if fsi.dwFreeClusters == 0 and fsInfoConfig is None:
+        if fsi.dwFreeClusters == 0:
             logging.debug("Automatic correction of free cluster field in FSINO (Count: {0})".format(fsinfo['clusters'] - 1))
             fsi.dwFreeClusters = int(fsinfo['clusters'] - 1)
 
@@ -218,10 +218,10 @@ class FATCreator(object):
             if (fsinfo['required_size'] / (1 << k)) < 1024: break
 
         free_clusters = fsinfo['clusters'] - 1
-        print("Successfully applied FAT32 to a %.02f %s volume.\n%d clusters of %.1f KB.\n%.02f %s free in %d clusters." % (
+        logging.info("Successfully applied FAT32 to a %.02f %s volume.%d clusters of %.1f KB.%.02f %s free in %d clusters." % (
             fsinfo['required_size'] / float(1 << k), sizes[k], fsinfo['clusters'], fsinfo['cluster_size'] / 1024.0,
             free_clusters * boot.cluster / float(1 << k), sizes[k], free_clusters))
-        print("\nFAT #1 @0x%X, Data Region @0x%X, Root (cluster #%d) @0x%X" % (
+        logging.info("FAT #1 @0x%X, Data Region @0x%X, Root (cluster #%d) @0x%X" % (
             boot.fatoffs, boot.cl2offset(2), 2, boot.cl2offset(2)))
         return boot, fsi
 
