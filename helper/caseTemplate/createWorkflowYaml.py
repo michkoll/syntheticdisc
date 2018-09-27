@@ -18,7 +18,7 @@ def createWorkflowYaml(yamlPath):
     # Create RawWriteStep
     rawStep = RawWriteStep(workflow, content=b'Testing', description="Write test string", position=1, positionType=PositionType.SECTOR)
     # Create step for loading boot sector from config file an write to disk
-    fatStep = FAT32CreateBootSectorStep(workflow, pathToConfig="/datadisk/Repos/github/syntheticdisc/helper/yaml/fat32.yml")
+    fatStep = FAT32CreateBootSectorStep(workflow, pathToConfig=os.path.join(os.path.dirname(yamlPath), "fat32.yml"))
 
     # Adding steps to workflow
     workflow.addStep(rawStep)

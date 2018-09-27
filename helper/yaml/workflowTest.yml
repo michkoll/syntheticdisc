@@ -10,16 +10,47 @@ steps:
   pathToConfig: /datadisk/Repos/github/syntheticdisc/helper/yaml/fat32.yml
 - !createDir
   description: Create first directory!
+  fullPath:
   parentDir:
   dirName: First
   deleted: false
+  mDate: '2016-01-02 02:02:02'
+  cDate: '2016-01-01 02:02:02'
+  aDate: '2016-01-03 02:02:02'
 - !createDir
   description: Create subdir
-  parentDir: First
-  dirName: Subdir
+  fullPath: /First/Subdir/
+  parentDir:
+  dirName:
   deleted: false
+  mDate:
+  cDate:
+  aDate:
 - !createDir
   description: Create sub subdir
+  fullPath:
   parentDir: First/Subdir
   dirName: SubSubdir
   deleted: false
+  mDate: '2016-01-02 02:02:02'
+  cDate: '2016-01-01 02:02:02'
+  aDate: '2016-01-03 02:02:02'
+- !createFile
+  description: Create first file
+  fullPath: /First/Test.txt
+  parentDir:
+  fileName:
+  deleted: true
+  mDate: '2016-01-02 02:02:02'
+  cDate: '2016-01-01 02:02:02'
+  aDate: '2016-01-03 02:02:02'
+  content: Das ist ein Test
+- !createDir
+  description: Create sub subdir
+  fullPath:
+  parentDir: First/Subdir
+  dirName: SubSubdir
+  deleted: true
+  mDate: '2016-01-02 02:02:02'
+  cDate: '2016-01-01 02:02:02'
+  aDate: '2016-01-03 02:02:02'

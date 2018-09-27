@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 from shutil import copyfile
 
@@ -7,6 +8,14 @@ from scripts import mkimage, createWorkflowYaml, createFat32BootYaml
 
 from workflow.mainConfig import MainConfig
 
+logPath = "./"
+fileName = "Disk"
+logging.basicConfig(level=logging.INFO,
+    format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+    handlers=[
+        logging.FileHandler("{0}/{1}.log".format(logPath, fileName)),
+        logging.StreamHandler()
+    ])
 
 yaml = YAML()
 yaml.register_class(MainConfig)
@@ -24,15 +33,18 @@ def readConfig(path):
 def prepareDisk():
     if mainConfig.blankDisk or os.path.exists(mainConfig.diskSrc):
         mkimage.createImageFile(mainConfig.diskDest, size=mainConfig.imageSize)
+        logging.info("Created image with size {0}: {1}".format(mainConfig.imageSize, mainConfig.destDisk))
     else:
         copyfile(mainConfig.diskSrc, mainConfig.diskDest)
+        logging.info("Copied image {0} to {1}".format(mainConfig.diskSrc, mainConfig.diskDest))
 
 def prepareWorkflow():
     createWorkflowYaml.createWorkflowYaml(mainConfig.workflowConfig)
-    pass
+    logging.info("Created workflow configuration: {0}".format(mainConfig.workflowConfig))
 
 def prepareBootConfig():
     createFat32BootYaml.createBootYaml(os.path.join(os.path.dirname(mainConfig.workflowConfig)))
+    logging.info("Created boot sector config in path: {0}".format(os.path.dirname(mainConfig.workflowConfig)))
 
 
 if __name__ == "__main__":
@@ -44,4 +56,4 @@ if __name__ == "__main__":
     prepareDisk()
     prepareWorkflow()
     prepareBootConfig()
-    print("END")
+    logging.info("Finished case preparation")

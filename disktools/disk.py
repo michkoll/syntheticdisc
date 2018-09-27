@@ -66,6 +66,7 @@ class Disk(object):
         logging.debug("request to write %d bytes @%Xh", len(s), int(self.pos))
         if len(s) == 0: return
         # If we have to complete a sector...
+
         if self.so:
             j = min(self.blocksize - self.so, len(s))
             logging.debug("writing middle sector %d[%d:%d]", self.si, self.so, self.so + j)
@@ -74,6 +75,8 @@ class Disk(object):
                 self.cache_readinto()
             # We assume buf is pointing to rawcache
             self.buf[self.so: self.so + j] = s[:j]
+            testbuf = self.buf[self.so: self.so + j]
+            testbuf2 = s[:j]
             s = s[j:]  # slicing penalty if buffer?
             logging.debug("len(s) is now %d", len(s))
             self.cache_dirties[self.si] = True
@@ -222,6 +225,7 @@ class Disk(object):
 
     def cache_flush(self, sector=None):
         self.cache_stats()
+
         if not self.cache_dirties:
             # 21.04.17: must ANYWAY reset (read-only) cache, or higher cached slots could get silently overwritten!
             logging.debug("resetting cache (no dirty sectors)")
@@ -232,6 +236,7 @@ class Disk(object):
             self._file.seek(sector * self.blocksize)
             i = self.cache_table[sector]
             self._file.write(self.cache[i:i + self.blocksize])
+            logging.debug("Cache value written: " + str(bytes(self.cache[i:i + self.blocksize])))
             del self.cache_dirties[sector]
             logging.debug("%s: dirty sector #%d committed to disk from cache[%d]", self, sector, i / 512)
             return
@@ -240,6 +245,7 @@ class Disk(object):
             self._file.seek(sec * self.blocksize)
             try:
                 i = self.cache_table[sec]
+                logging.debug("Cache value written: " + str(bytes(self.cache[i:i + self.blocksize])))
                 self._file.write(self.cache[i:i + self.blocksize])
             except:
                 logging.debug("ERROR! Sector %d in cache_dirties not in cache_table!", sec)
