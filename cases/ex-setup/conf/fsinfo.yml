@@ -1,0 +1,8 @@
+!FAT32FsInfoParameter
+sSignature1: RRaA
+sSignature2: rrAa
+sReserved1: ''
+dwFreeClusters: 0
+dwNextFreeCluster: 3
+sReserved2: ''
+wBootSignature: 43605

@@ -1,0 +1,1 @@
+Diese Datei wurde in das Dateisystem kopiert. Der Inhalt wird als bytearray eingelesen, ohne die Metadaten der Datei zu kopieren.

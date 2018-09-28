@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wxHexEditor_XML_TAG>
+  <filename path="/datadisk/Studium/M111/Source/cases/ex-diroperation/disk/dest.img">
+    <TAG id="0">
+      <start_offset>16432</start_offset>
+      <end_offset>16435</end_offset>
+      <tag_text>Clus12</tag_text>
+      <font_colour>#5C616C</font_colour>
+      <note_colour>#955154</note_colour>
+    </TAG>
+    <TAG id="1">
+      <start_offset>2113536</start_offset>
+      <end_offset>2114559</end_offset>
+      <tag_text>Cluster1</tag_text>
+      <font_colour>#5C616C</font_colour>
+      <note_colour>#B05DA0</note_colour>
+    </TAG>
+  </filename>
+</wxHexEditor_XML_TAG>

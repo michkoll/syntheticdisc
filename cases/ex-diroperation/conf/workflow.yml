@@ -1,0 +1,126 @@
+!workflow
+steps:
+- !createImage
+  description: Create new image
+  srcDisk:
+  destDisk: disk/dest.img
+  diskSize: 268435456
+- !FAT32CreateBootSector
+  description: Create FAT32 filesystem
+  pathToConfig: /datadisk/Repos/github/syntheticdisc/cases/ex-diroperation/conf/fat32.yml
+- !createDir
+  description: Create dir in root dir
+  fullPath:
+  parentDir:
+  dirName: Parent
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+- !createDir
+  description: Create short dir entry
+  fullPath:
+  parentDir:
+  dirName: short
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+- !createFile
+  description: Copy file to disk
+  fullPath: /short/content.txt
+  parentDir:
+  fileName:
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+  content:
+  contentFile: files/content.txt
+- !createDir
+  description: Create long dir entry
+  fullPath:
+  parentDir:
+  dirName: ThisIsALongDirName
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+- !createDir
+  description: Create subdir for time manipulation
+  fullPath: /Parent/ChildTime
+  parentDir:
+  dirName:
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+- !createFile
+  description: Default description
+  fullPath: /Parent/ChildTime/time.txt
+  parentDir:
+  fileName:
+  deleted: false
+  mDate: '2000-01-01 11:00:00'
+  cDate: '2000-01-01 12:00:00'
+  aDate: '2000-01-01 00:00:00'
+  content: TimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTimeTime
+  contentFile:
+- !createDir
+  description: Create subdir for delete operation
+  fullPath: /Parent/ChildDel
+  parentDir:
+  dirName:
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+- !createDir
+  description: Create subdir
+  fullPath: /Parent/ChildDel/nodelete
+  parentDir:
+  dirName:
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+- !createDir
+  description: Create subdir delete
+  fullPath: /Parent/ChildDel/delete
+  parentDir:
+  dirName:
+  deleted: true
+  mDate:
+  cDate:
+  aDate:
+- !createDir
+  description: Create subdir for reallocation
+  fullPath: /Parent/ChildRealloc
+  parentDir:
+  dirName:
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+- !createFile
+  description: Create file for deletion
+  fullPath: /Parent/ChildRealloc/LongDeletedFileName.txt
+  parentDir:
+  fileName:
+  deleted: true
+  mDate:
+  cDate:
+  aDate:
+  content: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+  contentFile:
+- !createFile
+  description: Create reallocation file
+  fullPath: /Parent/ChildRealloc/newfile.txt
+  parentDir:
+  fileName:
+  deleted: false
+  mDate:
+  cDate:
+  aDate:
+  content: Das ist die Datei, die den Cluster neu belegt.
+  contentFile:

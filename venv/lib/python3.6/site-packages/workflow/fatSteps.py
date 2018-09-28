@@ -73,6 +73,13 @@ class CreateDirStep(WorkflowStep):
         fatBootSector = FAT32(s=sFat, stream=disk)
 
         decodedFat = FAT(disk, fatBootSector.boot.fatoffs, fatBootSector.boot.clusters(), 32)
+        if hasattr(self._workflow, "fatLast"):
+            decodedFat.last = self._workflow.fatLast
+        if hasattr(self._workflow, "fatReserved"):
+            decodedFat.reserved = self._workflow.fatReserved
+        if hasattr(self._workflow, "fatBad"):
+            decodedFat.bad = self._workflow.fatBad
+
         dt = Dirtable(fatBootSector.boot, decodedFat, fatBootSector.boot.dwRootCluster)
 
         if self.parentDir is None:
@@ -157,6 +164,13 @@ class CreateFileStep(WorkflowStep):
         fatBootSector = FAT32(s=sFat, stream=disk)
 
         decodedFat = FAT(disk, fatBootSector.boot.fatoffs, fatBootSector.boot.clusters(), 32)
+        if hasattr(self._workflow, "fatLast"):
+            decodedFat.last = self._workflow.fatLast
+        if hasattr(self._workflow, "fatReserved"):
+            decodedFat.reserved = self._workflow.fatReserved
+        if hasattr(self._workflow, "fatBad"):
+            decodedFat.bad = self._workflow.fatBad
+
         dt = Dirtable(fatBootSector.boot, decodedFat, fatBootSector.boot.dwRootCluster)
 
         if self.parentDir is None:

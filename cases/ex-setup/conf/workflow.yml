@@ -1,0 +1,11 @@
+!workflow
+steps:
+- !rawWrite
+  description: Write test string
+  position: 1
+  content: !!binary |
+    VGVzdGluZw==
+  positionType: 2
+- !FAT32CreateBootSector
+  description: Write FAT32 BootSector
+  pathToConfig: /datadisk/Repos/github/syntheticdisc/cases/ex-setup/conf/fat32.yml

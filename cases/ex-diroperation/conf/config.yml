@@ -1,0 +1,8 @@
+!mainConfig
+diskSrc: /datadisk/Repos/github/syntheticdisc/cases/ex-diroperation/disk/src.img
+diskDest: /datadisk/Repos/github/syntheticdisc/cases/ex-diroperation/disk/dest.img
+blankDisk: true
+workflowConfig: /datadisk/Repos/github/syntheticdisc/cases/ex-diroperation/conf/workflow.yml
+logPath: /datadisk/Repos/github/syntheticdisc/cases/ex-diroperation/log/log.log
+logLevel: 1
+imageSize: 268435456

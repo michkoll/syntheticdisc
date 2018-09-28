@@ -1,0 +1,19 @@
+!workflow
+steps:
+- !createImage
+  description: Create new blank image file
+  srcDisk: disk/src.img
+  destDisk: disk/dest.img
+  diskSize: 0
+- !createFile
+  description: Default description
+  fullPath: /Kontakte/besenfelder.txt
+  parentDir:
+  fileName:
+  deleted: true
+  mDate:
+  cDate:
+  aDate:
+  content:
+  contentFile:
+fatLast: 268435455

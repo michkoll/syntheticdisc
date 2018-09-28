@@ -1,8 +1,9 @@
 !Fat32BootParameter
-chJumpInstruction: 0x9058EB
-chOemId: Test
+chJumpInstruction: !!binary |
+  61iQ
+chOemId: EX-DIROP
 wBytesPerSector: 512
-uchSectorsPerCluster: 32
+uchSectorsPerCluster: 2
 wRsvdSectorsCount: 32
 uchFatCopies: 2
 wMaxRootEntries: 0
@@ -19,9 +20,9 @@ wBootCopySector: 6
 chReserved: !!binary |
   AAAAAAAAAAAAAAAA
 chPhysDriveNumber: 128
-chReserved1: 0x00
+chReserved1: 0
 chExtBootSignature: 41
-wBootSignature: 0xAA55
+wBootSignature: 43605
 dwVolumeID: 1234567890
-sVolumeLabel: TEST
+sVolumeLabel: M111
 sFSType: FAT32

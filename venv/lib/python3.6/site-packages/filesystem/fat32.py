@@ -1075,7 +1075,7 @@ class Chain(object):
             if i == len(items)-1:
                 next = self.fat.last
             else:
-                next = items[i+1][0] # first of next run
+                next = list(items)[i+1][0] # first of next run
         # Updates VCN & next LCN
         self.lastvlcn = (self.lastvlcn[0]+n, next)
         logging.debug("Chain%08X: maxrun4len(%d) on %s, maxchunk of %d bytes, lastvlcn=%s", self.start, length, self.runs, maxchunk, self.lastvlcn)

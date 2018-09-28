@@ -3,4 +3,4 @@ __pycache__
 *.log
 tests/images
 *.pyc
-cases/
+*.img
